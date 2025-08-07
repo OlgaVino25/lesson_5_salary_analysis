@@ -99,6 +99,7 @@ python hh_sj.py
 
 ## Пример вывода
 
+<img width="1041" height="776" alt="Снимок экрана 2025-08-07 145529" src="https://github.com/user-attachments/assets/e2b32386-7572-4a7c-9a3d-8ff63d3b967b" />
 
 
 ## Особенности реализации
