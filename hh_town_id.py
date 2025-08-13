@@ -2,30 +2,33 @@ import requests
 
 
 def find_hh_town_id(city_name, headers):
-    """Возвращает ID города по названию используя API HeadHunter.
-
-    Args:
-        town_name: Название города для поиска
-
-    Returns:
-        int: ID города или None, если не найден
-    """
+    """Возвращает ID города по названию используя API HeadHunter."""
     areas_url = 'https://api.hh.ru/areas'
     response = requests.get(areas_url, headers=headers)
     response.raise_for_status()
+
+    if not city_name or not city_name.strip():
+        print("Неверное название города")
+        return None
+
+    normalized_city = city_name.strip().lower()
     countries = response.json()
 
-    for country in countries:
-        if city_name.strip().lower() == country['name'].lower():
-            return country['id']
-
-        if 'areas' in country:
-            for region in country['areas']:
-                if city_name.strip().lower() == region['name'].lower():
-                    return region['id']
-
-                if 'areas' in region:
-                    for city in region['areas']:
-                        if city_name.strip().lower() == city['name'].lower():
-                            return city['id']
+    if not countries:
+        print("Пустой ответ от API")
+        return None
+    
+    while countries:
+        area = countries.pop()
+        
+        if 'name' not in area:
+            continue
+            
+        if area['name'].lower() == normalized_city:
+            return area['id']
+        
+        if area.get('areas'):
+            countries.extend(area['areas'])
+    
+    print(f"Город '{city_name}' не найден")
     return None
