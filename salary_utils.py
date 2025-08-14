@@ -1,35 +1,16 @@
 from terminaltables import AsciiTable
 
 
-def predict_rub_salary(vacancy):
-    """Рассчитывает среднюю зарплату в рублях для вакансии.
-    
+def calculate_average_salary(salary_from: float, salary_to: float) -> float:
+    """Рассчитывает среднюю зарплату по двум граничным значениям.
+
     Args:
-        vacancy (dict): Данные вакансии
+        salary_from: Нижняя граница зарплаты
+        salary_to: Верхняя граница зарплаты
 
     Returns:
-        float or None: Средняя зарплата в рублях или None, если невозможно рассчитать
+        Рассчитанная средняя зарплата
     """
-    # Для HeadHunter
-    if 'salary' in vacancy and vacancy['salary']:
-        salary_data = vacancy['salary']
-        if salary_data['currency'] != 'RUR':
-            return None
-        salary_from = salary_data['from']
-        salary_to = salary_data['to']
-
-    # Для SuperJob
-    elif 'payment_from' in vacancy and 'payment_to' in vacancy:
-        salary_from = vacancy['payment_from']
-        salary_to = vacancy['payment_to']
-
-        # SuperJob: если валюта не рубли, то пропускаем
-        if vacancy['currency'] != 'rub':
-            return None
-    else:
-        return None
-    
-    # Рассчитываем среднюю зарплату
     if salary_from and salary_to:
         return (salary_from + salary_to) / 2
     elif salary_from:
@@ -40,9 +21,66 @@ def predict_rub_salary(vacancy):
         return None
 
 
+def process_hh_vacancy(vacancy: dict) -> float:
+    """Обрабатывает вакансию HeadHunter.
+
+    Args:
+        vacancy: Данные вакансии в формате HH
+
+    Returns:
+        Средняя зарплата в рублях или None
+    """
+    salary_data = vacancy['salary']
+    if salary_data['currency'] != 'RUR':
+        return None
+
+    return calculate_average_salary(
+        salary_data.get('from'),
+        salary_data.get('to')
+    )
+
+
+def process_sj_vacancy(vacancy: dict) -> float:
+    """Обрабатывает вакансию SuperJob.
+
+    Args:
+        vacancy: Данные вакансии в формате SJ
+
+    Returns:
+        Средняя зарплата в рублях или None
+    """
+    if vacancy['currency'] != 'rub':
+        return None
+
+    return calculate_average_salary(
+        vacancy.get('payment_from'),
+        vacancy.get('payment_to')
+    )
+
+
+def predict_rub_salary(vacancy: dict) -> float:
+    """Рассчитывает среднюю зарплату в рублях для вакансии.
+
+    Args:
+        vacancy: Данные вакансии
+
+    Returns:
+        Средняя зарплата в рублях или None
+    """
+    # Для HeadHunter
+    if 'salary' in vacancy and vacancy['salary']:
+        return process_hh_vacancy(vacancy)
+
+    # Для SuperJob
+    elif all(key in vacancy for key in ['payment_from', 'payment_to']):
+        return process_sj_vacancy(vacancy)
+
+    return None
+
+
 def calculate_stats(vacancies):
     """Вычисляет статистику по вакансиям.
-    
+
     Args:
         vacancies (list): Список вакансий
 
@@ -66,7 +104,7 @@ def calculate_stats(vacancies):
 
 def print_stats_table(stats, city_name, source):
     """Форматирует и выводит статистику в виде таблицы в консоль.
-    
+
     Args:
         stats (dict): Статистика в формате:
             {
