@@ -14,8 +14,6 @@
 - main.py - основной скрипт запуска
 - hh.py - функции для работы с API HeadHunter
 - sj.py - функции для работы с API SuperJob
-- hh_town_id.py - утилита для поиска ID городов в HeadHunter
-- sj_town_id.py - утилита для поиска ID городов в SuperJob
 - salary_utils.py - общие утилиты для работы с зарплатами
 
 ## Требования
