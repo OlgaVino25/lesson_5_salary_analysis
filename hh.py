@@ -1,11 +1,38 @@
 import requests
 from salary_utils import calculate_stats
-from hh_town_id import find_hh_town_id
+
+
+def find_hh_town_id(city_name, headers):
+    """Возвращает ID города по названию используя API HeadHunter."""
+    if not isinstance(city_name, str):
+        raise TypeError(f"Ожидается строка для city_name, получено {type(city_name)}")
+    if not isinstance(headers, dict):
+        raise TypeError(f"Ожидается словарь для headers, получено {type(headers)}")
+
+    if not city_name.strip():
+        raise ValueError("Название города не может быть пустой строкой")
+
+    normalized_city = city_name.strip().lower()
+
+    response = requests.get('https://api.hh.ru/areas', headers=headers)
+    response.raise_for_status()
+
+    countries = response.json()
+    stack = list(countries)
+
+    while stack:
+        area = stack.pop()
+        if area.get('name', '').lower() == normalized_city:
+            return area['id']
+
+        stack.extend(area.get('areas', []))
+
+    raise ValueError(f"Город '{city_name}' не найден в справочнике HH")
 
 
 def fetch_hh_page(page, language_query, area_id, hh_headers):
     """Выполняет запрос к HeadHunter API для конкретной страницы.
-    
+
     Args:
         page (int): Номер страницы для запроса
         language_query (str): Язык программирования для поиска
@@ -47,7 +74,7 @@ def fetch_hh_vacancies(language_query, area_id, hh_headers):
     page = 0
     max_attempts = 3
     total_found = 0
-    
+
     try:
         initial_page = fetch_hh_page(0, language_query, area_id, hh_headers)
         total_found = initial_page['found']
@@ -61,7 +88,7 @@ def fetch_hh_vacancies(language_query, area_id, hh_headers):
     while page < total_pages:
         attempts = 0
         success = False
-        
+
         while attempts < max_attempts and not success:
             try:
                 current_page = fetch_hh_page(page, language_query, area_id, hh_headers)
